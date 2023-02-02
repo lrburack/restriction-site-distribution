@@ -4,7 +4,9 @@ import numpy
 import matplotlib.pyplot as plt
 
 
-def find_all(a_str, sub):
+# WARNING: Unsorted
+def find_sub(seq, sub):
+    # This feels like an awful way of doing this but of all the things I've tried it's the fastest by far
     start = 0
     while True:
         start = seq.find(sub, start)
