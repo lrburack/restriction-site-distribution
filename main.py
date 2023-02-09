@@ -1,5 +1,4 @@
 import os
-
 from Bio import SeqIO
 from insights import *
 import numpy as np
@@ -27,11 +26,13 @@ def site_instances(seq, site_seq):
     return instances
 
 
-paths = os.listdir("Sequences/Human Genome")
+# paths = os.listdir("Sequences/Human Genome T2T/")
+paths = ["CP068271.2.gb"]
+
 for path in paths:
 
     # Read the record
-    record = SeqIO.read("Sequences/Human Genome/" + path, "genbank")
+    record = SeqIO.read("Sequences/Human Genome T2T/" + path, "genbank")
     print("Sequence " + record.name + " of length " + str(len(record.seq)))
 
     # Four cutters: DpnII and MboI -- GATC
@@ -39,29 +40,39 @@ for path in paths:
     restriction_seq = "GATC"
     seq = record.seq
 
+    # Remove unwanted region from sequence
+    seq = seq[int(2e7):int(5.5e7)] + seq[int(6.5e7):-int(2e7)]
+
     instances = site_instances(seq, restriction_seq)
     distances = np.diff(instances)
 
     print("\nInstances: " + str(len(instances)))
     print("Mean Distance: " + str(np.mean(distances)))
-
-    # Remove large outliers
-    # remove_above_zscore = 10
-    # stdev = np.std(distances)
-    # mean = np.mean(distances)
-    # print("\nRemoved " + str(sum(distances > mean + stdev * remove_above_zscore)) + " outliers.")
-    # print("Distances that were removed: " + str(distances[distances > mean + stdev * remove_above_zscore]))
-    # # Preprocess
-    # distances = distances[distances < mean + stdev * remove_above_zscore]
-
+    print("Cutting Probability (sites / sequence length): " + str(len(instances) / len(seq)))
 
     # make the figure
-    fig, axs = plt.subplots(2,1)
+    fig, axs = plt.subplots(2, 2)
     fig.tight_layout(pad=3.0)
 
-    site_distribution(axs[0], instances)
-    avg_distance_between_sites(axs[1], instances)
+    site_distribution(axs[0][0], instances)
+    # avg_distance_between_sites(axs[0][1], instances)
+    shifted_return_density(axs[0][1], distances, 1)
+    # autocorrelation(axs[1][0], distances)
+    shifted_returns(axs[1, 0], distances, 1)
+    distances_scatter(axs[1][1], distances, "linear", "log")
+
+
+    def exp(x, a, b):
+        return a * np.exp(-b * x)
+
+    popt, pcov = fit_distances(axs[1][1], exp, distances)
+
+    print("Cutting Probability (best fit line): " + str(1 - np.exp(-popt[1])))
+    print("Characteristic length: " + str(1/popt[1]))
+    print("Exponential Fit: " + str(round(popt[0], 3)) + " * e^(-" + str(popt[1]) + "x)")# + " + str(popt[2]))
+    print("Covariance: " + str(pcov))
 
     fig.suptitle(record.name + " with restriction sequence " + restriction_seq)
-    plt.savefig("C:/Users/lbjun/OneDrive/Documents/School/Di Pierro Lab/Fig Output/" + record.name + ".png")
+    plt.show()
+    # plt.savefig("C:/Users/lbjun/OneDrive/Documents/School/Di Pierro Lab/Fig Output/Good Sequences/Ncd/" + record.name + ".png")
     plt.close(fig)
