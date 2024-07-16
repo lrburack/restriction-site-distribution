@@ -7,7 +7,7 @@ from scipy.special import factorial
 
 
 def bp_notation(num):
-    units = ["bp", "kbp", "mbp"]
+    units = ["bp", "Kbp", "Mbp"]
     unit = units[int(np.log10(num) // 3)]
     val = np.power(10, np.log10(num) % 3 - np.log10(num)) * num
     return val, unit
@@ -43,6 +43,7 @@ def avg_distance_between_sites(ax, instances, bincount=200):
 def distances_scatter(ax, distances, xscale="linear", yscale="linear", bincount=300):
     """Creates a histogram restriction site frequency along a chromosome"""
     counts, bins = np.histogram(distances, bins=bincount)
+    print(bins)
     ax.scatter(bins[:-1], counts, s=5, color="lightcoral")
     ax.set_xscale(xscale)
     ax.set_yscale(yscale)
@@ -129,21 +130,23 @@ def poisson(x, avg):
 def poisson_distribution(ax, instances, regioncount=300):
     """Plots the poisson distribution of sites per region of a set length"""
     region_counts, region_bins = np.histogram(instances, bins=regioncount)
+    print(region_counts)
 
-    counts, bins = np.histogram(region_counts, bins=range(0, max(region_counts)))
+    counts, bins = np.histogram(region_counts, bins=range(min(region_counts), max(region_counts)))
+    # print(counts)
     # Normalize the data
     counts = np.divide(counts, sum(counts))
     ax.plot(bins[:-1], counts)
 
     # Plot a poisson fit
-    # popt, pcov = curve_fit(poisson, bins[:-1], counts)
-    # ax.plot(bins[:-1], poisson(bins[:-1], *popt), linestyle="dashed", color="navy", label="Fit Poisson")
+    popt, pcov = curve_fit(poisson, bins[:-1], counts)
+    ax.plot(bins[:-1], poisson(bins[:-1], *popt), linestyle="dashed", color="navy", label="Poisson Fit")
 
     val, units = bp_notation(round(region_bins[1])-round(region_bins[0]))
     ax.set_ylabel("Frequency")
     ax.set_xlabel("Sites per " + str(val) + units)
     ax.set_xlim([0, max(region_counts)])
-    # return popt, pcov, r2_score(counts, poisson(bins[:-1], *popt))
+    return popt, pcov, r2_score(counts, poisson(bins[:-1], *popt))
 
 
 def ideal_poisson(ax, restriction_length, region_length, xdata=np.array(range(100))):
