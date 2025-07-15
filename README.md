@@ -1,3 +1,5 @@
+The paper containing this work is available [here](https://www.researchgate.net/publication/391446652_Understanding_the_physical_processes_behind_DNA-DNA_proximity_ligation_assays)!
+
 # Restriction Site Distribution in the Genome
 Load any sequnece, identify the positions of restriction sites, and anylize their distribution. 
 
